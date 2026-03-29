@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔑 Deal Pipeline v4</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: #f0f0f3; color: #1a1a2e; max-width: 480px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; height: 100dvh; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* ── HEADER ── */
+  .hdr { background: #0f0f1e; padding: 18px 16px 14px; flex-shrink: 0; }
+  .hdr-row { display: flex; justify-content: space-between; align-items: center; }
+  .hdr-title { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .hdr-sub { color: #6666aa; font-size: 13px; margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .back-btn { background: transparent; border: none; color: #E07B3F; font-size: 16px; cursor: pointer; padding: 0; margin-bottom: 10px; display: block; font-family: 'DM Sans', sans-serif; }
+  .hdr-btns { display: flex; gap: 8px; align-items: center; }
+  .btn-lists { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; color: #999; font-size: 13px; padding: 8px 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-add-main { background: #E07B3F; border: none; border-radius: 22px; color: #fff; font-size: 24px; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 300; flex-shrink: 0; }
+
+  /* ── PIPELINE SUMMARY BAR ── */
+  .pipeline-summary { background: #0f0f1e; padding: 0 16px 14px; display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+  .pipeline-summary::-webkit-scrollbar { display: none; }
+  .summary-chip { flex-shrink: 0; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 8px 12px; min-width: 100px; }
+  .summary-chip-label { font-size: 10px; color: #666688; text-transform: uppercase; letter-spacing: .8px; font-family: 'DM Mono', monospace; }
+  .summary-chip-val { font-size: 16px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar { background: #0f0f1e; padding: 0 12px 12px; display: flex; gap: 6px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-pill { flex-shrink: 0; background: transparent; border: 1.5px solid #2a2a44; border-radius: 20px; color: #666688; padding: 6px 14px; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .2s; font-family: 'DM Sans', sans-serif; }
+  .filter-pill.active { color: #fff; }
+
+  /* ── SCROLL BODY ── */
+  .scroll-body { flex: 1; overflow-y: auto; padding: 12px 12px 80px; background: #f0f0f3; }
+
+  /* ── PROPERTY CARDS ── */
+  .prop-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.07); border-left: 4px solid #ccc; position: relative; cursor: pointer; transition: transform .1s, box-shadow .1s; }
+  .prop-card:active { transform: scale(.98); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .card-top-row { display: flex; align-items: flex-start; justify-content: space-between; }
+  .card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .side-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+  .side-buyer { background: #e8f4fd; color: #2980b9; }
+  .side-seller { background: #fef5e7; color: #d35400; }
+  .prop-type-badge { font-size: 10px; padding: 2px 8px; border-radius: 6px; font-weight: 600; background: #f0f0f3; color: #888; }
+  .prop-name { font-size: 16px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.2px; }
+  .prop-sub { font-size: 13px; color: #888; margin-top: 2px; }
+  .prop-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .stage-badge { font-size: 12px; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+  .prop-price { font-size: 14px; font-weight: 700; color: #1a1a2e; font-family: 'DM Mono', monospace; }
+  .priority-dot { width: 10px; height: 10px; border-radius: 50%; background: #e74c3c; margin-top: 4px; flex-shrink: 0; }
+  .close-date { font-size: 12px; color: #aaa; margin-top: 8px; }
+  .close-date.urgent { color: #e74c3c; font-weight: 600; }
+  .commission-line { font-size: 12px; color: #27ae60; margin-top: 3px; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  /* ── PROGRESS BAR ── */
+  .prog-wrap { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .prog-track { flex: 1; height: 5px; background: #eee; border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .prog-pct { font-size: 12px; color: #888; min-width: 32px; text-align: right; font-family: 'DM Mono', monospace; }
+
+  /* ── DETAIL HEADER PROGRESS ── */
+  .det-prog-track { height: 8px; background: rgba(255,255,255,.2); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .det-prog-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; background: #fff; border-bottom: 2px solid #eee; flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 1; padding: 13px 4px; border: none; background: transparent; font-size: 13px; cursor: pointer; text-transform: capitalize; border-bottom: 3px solid transparent; color: #aaa; transition: all .2s; white-space: nowrap; min-width: 60px; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+  .tab.active { font-weight: 700; border-bottom-color: currentColor; }
+
+  /* ── CHECKLIST ITEMS ── */
+  .chk-item { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.06); transition: opacity .15s; }
+  .chk-item:active { opacity: .7; }
+  .chk-box { width: 24px; height: 24px; border-radius: 6px; border: 2.5px solid #ddd; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .chk-box.checked { border-color: currentColor; background: currentColor; }
+  .chk-label { font-size: 15px; color: #333; line-height: 1.4; }
+  .chk-label.done { color: #bbb; text-decoration: line-through; }
+
+  /* ── STAGE SELECTOR ── */
+  .stage-row { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; cursor: pointer; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,.06); transition: border-color .2s; }
+  .stage-icon-wrap { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .stage-name { font-size: 15px; font-weight: 500; color: #333; }
+  .stage-count { font-size: 12px; color: #aaa; margin-top: 1px; }
+  .stage-check { font-size: 18px; margin-left: auto; }
+
+  /* ── BUTTONS ── */
+  .btn-primary { width: 100%; background: #E07B3F; border: none; border-radius: 12px; color: #fff; padding: 16px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-secondary { width: 100%; background: #fff; border: 2px solid #eee; border-radius: 10px; padding: 16px; font-size: 15px; color: #888; cursor: pointer; margin-top: 10px; font-family: 'DM Sans', sans-serif; }
+  .btn-priority { width: 100%; padding: 16px; border: 2px solid #eee; border-radius: 10px; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: 'DM Sans', sans-serif; }
+
+  /* ── FORM ── */
+  .form-label { font-size: 11px; color: #aaa; margin-bottom: 5px; display: block; padding-left: 2px; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; }
+  .form-input { width: 100%; padding: 13px 14px; font-size: 16px; border: 1.5px solid #e8e8ec; border-radius: 10px; color: #333; background: #fff; font-family: 'DM Sans', sans-serif; }
+  .form-input:focus { outline: none; border-color: #E07B3F; }
+  textarea.form-input { min-height: 90px; resize: vertical; }
+  select.form-input { appearance: none; -webkit-appearance: none; }
+  .form-group { margin-bottom: 14px; }
+  .priority-toggle { background: #fff; border-radius: 10px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 2px solid transparent; transition: border-color .2s; }
+
+  /* ── FORM ROW (side by side) ── */
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+
+  /* ── SEGMENT CONTROL ── */
+  .seg-ctrl { display: flex; background: #eee; border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg-btn { flex: 1; padding: 10px 0; border: none; border-radius: 8px; background: transparent; font-size: 14px; font-weight: 600; color: #999; cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif; }
+  .seg-btn.active { background: #fff; color: #1a1a2e; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+  /* ── NOTES ── */
+  .notes-card { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 10px; }
+  .notes-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .notes-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; }
+  .notes-edit-btn { background: transparent; border: none; color: #E07B3F; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+  .notes-text { font-size: 15px; color: #333; line-height: 1.6; }
+  .notes-empty { font-size: 15px; color: #ccc; font-style: italic; }
+  .save-cancel { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-save-sm { flex: 1; background: #E07B3F; border: none; border-radius: 8px; color: #fff; padding: 12px; font-size: 15px; cursor: pointer; font-weight: 600; font-family: 'DM Sans', sans-serif; }
+  .btn-cancel-sm { flex: 1; background: #f0f0f0; border: none; border-radius: 8px; color: #888; padding: 12px; font-size: 15px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .close-card { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+
+  /* ── CONTACT LOG ── */
+  .log-entry { background: #fff; border-radius: 10px; padding: 13px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); border-left: 3px solid #ccc; }
+  .log-entry-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .log-entry-type { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+  .log-entry-time { font-size: 11px; color: #bbb; font-family: 'DM Mono', monospace; }
+  .log-entry-text { font-size: 14px; color: #444; margin-top: 5px; line-height: 1.5; }
+  .log-entry-delete { background: transparent; border: none; color: #ddd; font-size: 16px; cursor: pointer; padding: 0 0 0 8px; flex-shrink: 0; }
+  .log-add-zone { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .log-type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .log-type-btn { padding: 6px 12px; border-radius: 8px; border: 1.5px solid #eee; background: #fff; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+  .log-type-btn.sel { color: #fff; border-color: transparent; }
+  .log-input-row { display: flex; gap: 8px; }
+  .log-text-input { flex: 1; padding: 11px 13px; font-size: 15px; border: 1.5px solid #eee; border-radius: 9px; color: #333; font-family: 'DM Sans', sans-serif; }
+  .log-text-input:focus { outline: none; border-color: #E07B3F; }
+  .log-submit-btn { border: none; border-radius: 9px; background: #E07B3F; color: #fff; font-size: 22px; width: 46px; cursor: pointer; flex-shrink: 0; }
+  .log-empty { text-align: center; color: #ccc; font-size: 14px; padding: 20px 0; font-style: italic; }
+
+  /* ── KEY DATES ── */
+  .key-dates-card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .key-date-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f5; }
+  .key-date-row:last-child { border-bottom: none; }
+  .key-date-label { font-size: 13px; color: #555; font-weight: 500; }
+  .key-date-val { font-size: 13px; color: #1a1a2e; font-family: 'DM Mono', monospace; font-weight: 600; }
+  .key-date-val.urgent { color: #e74c3c; }
+  .key-date-val.soon { color: #e07b3f; }
+  .key-date-val.empty { color: #ddd; font-style: italic; font-family: 'DM Sans', sans-serif; font-weight: 400; }
+
+  /* ── CONTACTS SECTION ── */
+  .contacts-card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .contact-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-role { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; }
+  .contact-name { font-size: 14px; color: #1a1a2e; font-weight: 600; margin-top: 1px; }
+  .contact-name.empty { color: #ccc; font-style: italic; font-weight: 400; font-size: 13px; }
+  .contact-edit-btn { background: transparent; border: none; color: #E07B3F; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+
+  /* ── COMMISSION CARD ── */
+  .comm-card { background: linear-gradient(135deg, #0f2617, #1a3a24); border-radius: 14px; padding: 18px; margin-bottom: 10px; }
+  .comm-title { font-size: 11px; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .7px; font-weight: 600; margin-bottom: 12px; }
+  .comm-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .comm-label { font-size: 13px; color: rgba(255,255,255,.6); }
+  .comm-val { font-size: 15px; color: #fff; font-family: 'DM Mono', monospace; font-weight: 600; }
+  .comm-total-row { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.1); margin-top: 4px; }
+  .comm-total-label { font-size: 14px; color: rgba(255,255,255,.8); font-weight: 600; }
+  .comm-total-val { font-size: 22px; color: #4cd474; font-family: 'DM Mono', monospace; font-weight: 700; }
+
+  /* ── CHECKLIST MANAGER ── */
+  .stage-mgr-row { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-left: 4px solid #ccc; }
+  .chevron { color: #ccc; font-size: 18px; margin-left: auto; }
+
+  /* ── MODAL ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 200; flex-direction: column; justify-content: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet { background: #fff; border-radius: 16px 16px 0 0; max-height: 92dvh; display: flex; flex-direction: column; }
+  .modal-hdr { padding: 18px 16px 14px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+  .modal-title { font-size: 17px; font-weight: 700; color: #1a1a2e; }
+  .modal-sub { font-size: 12px; color: #aaa; margin-top: 2px; }
+  .modal-close { background: #f0f0f0; border: none; border-radius: 20px; width: 32px; height: 32px; font-size: 16px; cursor: pointer; color: #888; flex-shrink: 0; }
+  .modal-body { flex: 1; overflow-y: auto; padding: 10px 12px; }
+  .modal-footer { padding: 12px 16px; border-top: 1px solid #eee; background: #fff; flex-shrink: 0; }
+
+  /* ── CONTACT EDIT MODAL ── */
+  .contact-modal-field { margin-bottom: 12px; }
+
+  /* ── EDITOR ITEM ── */
+  .ed-item { background: #fafafa; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; border: 1.5px solid #eee; }
+  .ed-item-row { display: flex; align-items: center; gap: 6px; }
+  .ed-arrows { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .arr-btn { background: transparent; border: none; cursor: pointer; color: #bbb; font-size: 12px; line-height: 1; padding: 1px 4px; }
+  .arr-btn:disabled { color: #e0e0e0; cursor: default; }
+  .ed-text { flex: 1; font-size: 14px; color: #333; line-height: 1.4; }
+  .ed-btn { background: transparent; border: none; cursor: pointer; font-size: 16px; padding: 4px 6px; }
+  .ed-input { width: 100%; padding: 8px 10px; font-size: 15px; border: 2px solid #E07B3F; border-radius: 8px; color: #333; margin-bottom: 0; font-family: 'DM Sans', sans-serif; }
+  .ed-input:focus { outline: none; }
+  .ed-edit-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .ed-save { flex: 1; border: none; border-radius: 7px; color: #fff; padding: 9px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .ed-cancel { flex: 1; background: #f0f0f0; border: none; border-radius: 7px; color: #888; padding: 9px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  /* ── ADD ITEM ROW ── */
+  .add-item-wrap { background: #f0f8ff; border-radius: 10px; padding: 12px; margin-top: 6px; border: 1.5px dashed #aaddff; }
+  .add-item-label { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .add-item-row { display: flex; gap: 8px; }
+  .add-item-input { flex: 1; padding: 10px 12px; font-size: 15px; border: 1.5px solid #ddd; border-radius: 8px; color: #333; font-family: 'DM Sans', sans-serif; }
+  .add-item-input:focus { outline: none; border-color: #E07B3F; }
+  .add-item-btn { border: none; border-radius: 8px; color: #fff; width: 44px; font-size: 22px; cursor: pointer; flex-shrink: 0; }
+  .reset-btn { width: 100%; margin-top: 12px; padding: 12px; background: transparent; border: 1.5px solid #eee; border-radius: 10px; font-size: 13px; color: #ccc; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  /* ── EMPTY ── */
+  .empty-msg { text-align: center; color: #bbb; margin-top: 60px; font-size: 15px; line-height: 1.6; }
+
+  /* ── DOCS TAB ── */
+  .docs-add-zone { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .docs-add-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; margin-bottom: 10px; }
+  .doc-type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .doc-type-btn { font-size: 12px; padding: 5px 10px; border-radius: 8px; border: 1.5px solid #eee; background: #fff; color: #888; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .doc-type-btn.sel { border-color: #E07B3F; color: #E07B3F; background: #fff5f0; font-weight: 600; }
+  .doc-link-row { display: flex; gap: 8px; }
+  .doc-link-input { flex: 1; padding: 10px 12px; font-size: 14px; border: 1.5px solid #ddd; border-radius: 8px; color: #333; font-family: 'DM Sans', sans-serif; min-width: 0; }
+  .doc-link-input:focus { outline: none; border-color: #E07B3F; }
+  .doc-name-input { width: 100%; padding: 10px 12px; font-size: 14px; border: 1.5px solid #ddd; border-radius: 8px; color: #333; font-family: 'DM Sans', sans-serif; margin-bottom: 8px; }
+  .doc-name-input:focus { outline: none; border-color: #E07B3F; }
+  .doc-add-btn { background: #E07B3F; border: none; border-radius: 8px; color: #fff; font-size: 22px; width: 44px; height: 44px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .doc-item { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); display: flex; align-items: center; gap: 12px; }
+  .doc-icon { font-size: 22px; flex-shrink: 0; }
+  .doc-info { flex: 1; min-width: 0; }
+  .doc-name { font-size: 14px; font-weight: 600; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-type-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+  .doc-open-btn { background: #f0f0f3; border: none; border-radius: 8px; color: #555; font-size: 13px; padding: 7px 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; flex-shrink: 0; text-decoration: none; display: inline-block; }
+  .doc-del-btn { background: transparent; border: none; color: #ddd; font-size: 18px; cursor: pointer; padding: 0 0 0 6px; flex-shrink: 0; }
+  .doc-empty { text-align: center; color: #bbb; font-size: 14px; padding: 30px 20px; line-height: 1.6; }
+
+  /* ── CHECKMARK SVG ── */
+  .chk-svg { pointer-events: none; }
+
+  /* ── DELETE CONFIRM ── */
+  .delete-zone { padding: 16px; }
+
+  /* ── SECTION HEADER ── */
+  .section-hdr { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: .7px; font-weight: 700; padding: 4px 2px 8px; }
+
+  /* ── MLS IMPORT ── */
+  .mls-zone { background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); border: 2px dashed #e0e0e8; position: relative; transition: border-color .2s; }
+  .mls-zone.drag-over { border-color: #E07B3F; background: #fff8f5; }
+  .mls-zone-label { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .mls-zone-sub { font-size: 12px; color: #aaa; margin-bottom: 14px; }
+  .mls-upload-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; background: #1a1a2e; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .mls-upload-btn input[type="file"] { display: none; }
+  .mls-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+  .mls-divider-line { flex: 1; height: 1px; background: #eee; }
+  .mls-divider-text { font-size: 11px; color: #ccc; text-transform: uppercase; letter-spacing: .5px; }
+  .mls-status { display: none; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
+  .mls-status.visible { display: flex; }
+  .mls-status.loading { background: #fff8f0; border: 1px solid #f0c898; color: #c07830; }
+  .mls-status.success { background: #f0fff5; border: 1px solid #a0ddb8; color: #1a8a4a; }
+  .mls-status.error   { background: #fff0f0; border: 1px solid #f0b8b8; color: #c03030; }
+  .mls-spinner { width: 14px; height: 14px; border: 2px solid #f0c898; border-top-color: #E07B3F; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .mls-filled-badge { display: inline-flex; align-items: center; gap: 4px; background: #f0fff5; border: 1px solid #a0ddb8; color: #1a8a4a; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; margin-left: 8px; }
+
+  /* ── API KEY SETTINGS ── */
+  .apikey-bar { background: #1a1a2e; border-top: 1px solid #2a2a44; padding: 14px 16px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .apikey-input { flex: 1; background: #0f0f1e; border: 1px solid #2a2a44; border-radius: 8px; color: #ccc; font-size: 13px; padding: 9px 12px; font-family: 'DM Mono', monospace; }
+  .apikey-input:focus { outline: none; border-color: #E07B3F; }
+  .apikey-save-btn { background: #E07B3F; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 14px; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+  .apikey-status { font-size: 11px; font-family: 'DM Mono', monospace; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: LIST
+═════════════════════════════════════════════════ -->
+<div id="screen-list" class="screen active">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div>
+        <div class="hdr-title">🔑 Deal Pipeline</div>
+        <div class="hdr-sub" id="prop-count">0 active deals · v4</div>
+      </div>
+      <div class="hdr-btns">
+        <button class="btn-lists" onclick="showScreen('checklists')">✏️ Lists</button>
+        <button class="btn-add-main" onclick="showScreen('add')">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="pipeline-summary" id="pipeline-summary"></div>
+  <div class="filter-bar" id="filter-bar"></div>
+  <div class="scroll-body" id="prop-list"></div>
+  <div class="apikey-bar">
+    <input class="apikey-input" id="apikey-input" type="password" placeholder="Paste Anthropic API key for MLS import…">
+    <button class="apikey-save-btn" onclick="saveApiKey()">Save</button>
+    <span class="apikey-status" id="apikey-status"></span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: DETAIL
+═════════════════════════════════════════════════ -->
+<div id="screen-detail" class="screen">
+  <div class="hdr" id="detail-hdr">
+    <button class="back-btn" onclick="showScreen('list')">← Back</button>
+    <div class="hdr-row">
+      <div style="flex:1">
+        <div class="hdr-title" id="det-address"></div>
+        <div class="hdr-sub" id="det-city"></div>
+        <div class="hdr-sub" id="det-client-price"></div>
+      </div>
+      <div id="det-priority-badge"></div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span id="det-stage-badge" class="stage-badge"></span>
+        <span class="hdr-sub" id="det-done-count"></span>
+      </div>
+      <div class="det-prog-track"><div class="det-prog-fill" id="det-prog-fill"></div></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-checklist" onclick="switchTab('checklist')">Checklist</button>
+    <button class="tab" id="tab-contacts" onclick="switchTab('contacts')">Contacts</button>
+    <button class="tab" id="tab-log" onclick="switchTab('log')">Log</button>
+    <button class="tab" id="tab-docs" onclick="switchTab('docs')">Docs</button>
+    <button class="tab" id="tab-notes" onclick="switchTab('notes')">Notes</button>
+    <button class="tab" id="tab-stage" onclick="switchTab('stage')">Stage</button>
+  </div>
+  <div class="scroll-body" id="detail-body"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: ADD PROPERTY
+═════════════════════════════════════════════════ -->
+<div id="screen-add" class="screen">
+  <div class="hdr">
+    <button class="back-btn" onclick="showScreen('list')">← Cancel</button>
+    <div class="hdr-title">Add New Deal</div>
+  </div>
+  <div class="scroll-body">
+
+    <!-- MLS PASTE IMPORT -->
+    <div class="mls-zone" id="mls-drop-zone">
+      <div class="mls-zone-label">📋 Import from MLS Listing</div>
+      <div class="mls-zone-sub">Open the MLS PDF, press Ctrl+A then Ctrl+C, then paste below</div>
+      <div class="mls-status" id="mls-status">
+        <div class="mls-spinner" id="mls-spinner"></div>
+        <span id="mls-status-text"></span>
+      </div>
+      <textarea id="mls-paste-input" style="width:100%;height:90px;padding:10px 12px;font-size:13px;border:1.5px solid #ddd;border-radius:8px;color:#333;font-family:'DM Sans',sans-serif;resize:none;margin-bottom:10px" placeholder="Paste MLS listing text here…"></textarea>
+      <button class="mls-upload-btn" onclick="handleMLSPaste()">⚡ Extract & Fill Form</button>
+      <div class="mls-divider">
+        <div class="mls-divider-line"></div>
+        <div class="mls-divider-text">or fill in manually below</div>
+        <div class="mls-divider-line"></div>
+      </div>
+    </div>
+
+    <!-- Side: Buyer vs Seller -->
+    <div class="form-group">
+      <label class="form-label">DEAL SIDE</label>
+      <div class="seg-ctrl">
+        <button class="seg-btn active" id="seg-buyer" onclick="setFormSide('buyer')">🛒 Buyer</button>
+        <button class="seg-btn" id="seg-seller" onclick="setFormSide('seller')">🏷 Seller</button>
+      </div>
+    </div>
+
+    <!-- Property Type -->
+    <div class="form-group">
+      <label class="form-label">PROPERTY TYPE</label>
+      <select class="form-input" id="f-proptype">
+        <option value="SFH">Single Family Home</option>
+        <option value="Condo">Condo / Townhouse</option>
+        <option value="Multi">Multi-Family</option>
+        <option value="Land">Land / Lot</option>
+        <option value="Commercial">Commercial</option>
+      </select>
+    </div>
+
+    <div class="form-group"><label class="form-label">STREET ADDRESS *</label><input class="form-input" id="f-address" placeholder="123 Main St"></div>
+    <div class="form-group"><label class="form-label">CITY</label><input class="form-input" id="f-city" placeholder="Boca Raton"></div>
+    <div class="form-group"><label class="form-label">CLIENT NAME *</label><input class="form-input" id="f-client" placeholder="Buyer or seller name"></div>
+
+    <!-- Price & Commission side by side -->
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">LIST PRICE</label><input class="form-input" id="f-price" placeholder="$000,000"></div>
+      <div class="form-group"><label class="form-label">COMM %</label><input class="form-input" id="f-comm" placeholder="3.0" type="number" step="0.1" min="0" max="10"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">CURRENT STAGE</label>
+      <select class="form-input" id="f-stage"></select>
+    </div>
+
+    <!-- Key Dates -->
+    <div class="form-group"><label class="form-label">TARGET CLOSE DATE</label><input class="form-input" type="date" id="f-close"></div>
+    <div class="form-group"><label class="form-label">INSPECTION DEADLINE</label><input class="form-input" type="date" id="f-inspection-date"></div>
+    <div class="form-group"><label class="form-label">LOAN COMMITMENT DATE</label><input class="form-input" type="date" id="f-loan-date"></div>
+
+    <!-- Contacts -->
+    <div class="form-group"><label class="form-label">CO-AGENT NAME</label><input class="form-input" id="f-coagent" placeholder="Other agent"></div>
+    <div class="form-group"><label class="form-label">LENDER NAME</label><input class="form-input" id="f-lender" placeholder="Loan officer"></div>
+    <div class="form-group"><label class="form-label">TITLE / ATTORNEY</label><input class="form-input" id="f-title-co" placeholder="Title company or attorney"></div>
+
+    <div class="form-group"><label class="form-label">NOTES</label><textarea class="form-input" id="f-notes" placeholder="Any quick notes..."></textarea></div>
+
+    <div class="priority-toggle" id="f-priority-toggle" onclick="toggleFormPriority()">
+      <span id="f-priority-label" style="font-size:15px;color:#888">🔴 Mark as High Priority</span>
+      <div id="f-priority-box" style="width:24px;height:24px;border-radius:6px;background:#eee;display:flex;align-items:center;justify-content:center;"></div>
+    </div>
+    <div style="height:14px"></div>
+    <button class="btn-primary" onclick="saveNewProperty()">Add Deal</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN: CHECKLIST MANAGER
+═════════════════════════════════════════════════ -->
+<div id="screen-checklists" class="screen">
+  <div class="hdr">
+    <button class="back-btn" onclick="showScreen('list')">← Back</button>
+    <div class="hdr-title">✏️ Manage Checklists</div>
+    <div class="hdr-sub">Customize tasks for each stage</div>
+  </div>
+  <div class="scroll-body" id="mgr-list"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     MODAL: CHECKLIST EDITOR
+═════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="editor-modal">
+  <div class="modal-sheet">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="modal-save-btn" onclick="saveModal()">Save Checklist</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     MODAL: CONTACT EDITOR
+═════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal-sheet">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Edit Contacts</div>
+        <div class="modal-sub">People involved in this deal</div>
+      </div>
+      <button class="modal-close" onclick="closeContactModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="contact-modal-field"><label class="form-label">CO-AGENT / OTHER AGENT</label><input class="form-input" id="cm-coagent" placeholder="Name"></div>
+      <div class="contact-modal-field"><label class="form-label">LENDER / LOAN OFFICER</label><input class="form-input" id="cm-lender" placeholder="Name"></div>
+      <div class="contact-modal-field"><label class="form-label">TITLE / ATTORNEY</label><input class="form-input" id="cm-title-co" placeholder="Name"></div>
+      <div class="contact-modal-field"><label class="form-label">INSPECTOR</label><input class="form-input" id="cm-inspector" placeholder="Name"></div>
+      <div class="contact-modal-field"><label class="form-label">APPRAISER</label><input class="form-input" id="cm-appraiser" placeholder="Name"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveContactModal()">Save Contacts</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     MODAL: KEY DATES EDITOR
+═════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="dates-modal">
+  <div class="modal-sheet">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">Key Dates</div>
+        <div class="modal-sub">Track all critical deadlines</div>
+      </div>
+      <button class="modal-close" onclick="closeDatesModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="contact-modal-field"><label class="form-label">TARGET CLOSE DATE</label><input class="form-input" type="date" id="dm-close"></div>
+      <div class="contact-modal-field"><label class="form-label">INSPECTION DEADLINE</label><input class="form-input" type="date" id="dm-inspection"></div>
+      <div class="contact-modal-field"><label class="form-label">OPTION / DUE DILIGENCE END</label><input class="form-input" type="date" id="dm-option"></div>
+      <div class="contact-modal-field"><label class="form-label">APPRAISAL DUE</label><input class="form-input" type="date" id="dm-appraisal"></div>
+      <div class="contact-modal-field"><label class="form-label">LOAN COMMITMENT DATE</label><input class="form-input" type="date" id="dm-loan"></div>
+      <div class="contact-modal-field"><label class="form-label">WALK-THROUGH DATE</label><input class="form-input" type="date" id="dm-walkthrough"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveDatesModal()">Save Dates</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════
+const STAGES = [
+  { id:'prelisting',  label:'Pre-Listing',      color:'#E07B3F', icon:'🏠' },
+  { id:'active',      label:'Active Listing',   color:'#3F8FE0', icon:'📋' },
+  { id:'contract',    label:'Under Contract',   color:'#9B59B6', icon:'✍️' },
+  { id:'inspection',  label:'Inspection',       color:'#E0B83F', icon:'🔍' },
+  { id:'appraisal',   label:'Appraisal',        color:'#E05C3F', icon:'📊' },
+  { id:'title',       label:'Title',            color:'#27AE8F', icon:'📜' },
+  { id:'funding',     label:'Funding / Close',  color:'#27AE60', icon:'🔑' },
+];
+
+const LOG_TYPES = [
+  { id:'call',  label:'📞 Call',  color:'#3F8FE0' },
+  { id:'email', label:'📧 Email', color:'#9B59B6' },
+  { id:'text',  label:'💬 Text',  color:'#27AE8F' },
+  { id:'note',  label:'📝 Note',  color:'#E07B3F' },
+  { id:'visit', label:'🏠 Visit', color:'#E0B83F' },
+];
+
+const CONTACT_ROLES = [
+  { key:'coagent',   label:'Co-Agent' },
+  { key:'lender',    label:'Lender' },
+  { key:'titleCo',   label:'Title / Attorney' },
+  { key:'inspector', label:'Inspector' },
+  { key:'appraiser', label:'Appraiser' },
+];
+
+// ── Side-aware default checklists ──
+const DEFAULT_LISTS = {
+  seller: {
+    prelisting:  ['Sign listing agreement','Order professional photography','Staging consultation completed','Prepare seller disclosures','Run CMA / set list price','Create MLS draft','Schedule pre-listing inspection','Request HOA docs','Set up showing instructions & lockbox'],
+    active:      ['MLS listing is live','Syndicated to Zillow / Realtor.com','Open house scheduled & promoted','Seller showing-feedback system active','Review price reduction if needed','Respond to all showing requests promptly','Offer review date communicated'],
+    contract:    ['Executed contract uploaded','Confirm earnest money received','Track option / due-diligence deadline','Notify title company / closing attorney','Add all key dates to calendar','Confirm buyer agent contact info','Plan utility transfer / cancellation'],
+    inspection:  ['Confirm inspector access to property','Receive inspection report','Review repair requests from buyer','Negotiate credits or repairs','Execute repair addendum','Schedule any required follow-up inspection'],
+    appraisal:   ['Confirm appraiser access to property','Prepare comps packet for appraiser','Receive appraisal report','Confirm value meets contract price','Negotiate if low appraisal received'],
+    title:       ['Title company engaged','Title search ordered','Review title commitment','Clear any liens or encumbrances','Provide survey if required','Review closing disclosure','Provide HOA estoppel letter'],
+    funding:     ['Confirm clear to close received','Confirm closing date & time','Final walk-through scheduled','Verify wire instructions (fraud check)','Review settlement statement / ALTA','Deliver keys & access codes at closing','Commission confirmed in HUD/ALTA','Update MLS to Sold'],
+  },
+  buyer: {
+    prelisting:  ['Define buyer needs & wish list','Obtain pre-approval letter','Set search criteria & price range','Sign buyer representation agreement','Set up MLS property alerts','Discuss neighborhood priorities with buyer','Confirm lender contact & loan type'],
+    active:      ['Schedule showings for shortlisted properties','Complete comparative market analysis on targets','Discuss pros/cons of each showing','Identify top choice property','Review HOA docs & rules if applicable','Confirm buyer is ready to write offer'],
+    contract:    ['Draft and submit offer','Negotiate counter-offer if needed','Executed contract uploaded','Submit earnest money deposit','Confirm option / due-diligence period','Notify lender & title company','Add all key dates to calendar','Send contract to lender for loan processing'],
+    inspection:  ['Hire inspector & schedule inspection','Attend inspection with buyer','Review inspection report with buyer','Submit repair request or credit ask','Negotiate seller response','Execute repair / credit addendum','Schedule follow-up inspection if needed'],
+    appraisal:   ['Confirm lender ordered appraisal','Coordinate appraiser access with listing agent','Review appraisal report with buyer','Confirm value meets contract price','Renegotiate or invoke appraisal contingency if low'],
+    title:       ['Confirm title company engaged','Review title commitment with buyer','Confirm no liens or title issues','Survey ordered if required','Review closing disclosure with buyer','Confirm HOA estoppel received'],
+    funding:     ['Confirm final loan approval / clear to close','Confirm closing date & time with all parties','Schedule final walk-through','Verify wire instructions with title (fraud check)','Review settlement statement with buyer','Attend closing — keys received','Commission confirmed in HUD/ALTA'],
+  },
+};
+
+// masterLists is now keyed as { seller: {...}, buyer: {...} }
+let masterLists = JSON.parse(localStorage.getItem('masterLists_v3') || 'null') || JSON.parse(JSON.stringify(DEFAULT_LISTS));
+// migrate old single-key format if present
+if (masterLists && !masterLists.seller) {
+  masterLists = JSON.parse(JSON.stringify(DEFAULT_LISTS));
+}
+let properties  = JSON.parse(localStorage.getItem('properties_v2')  || 'null') || [
+  {
+    id:1, address:'123 Maple St', city:'Boca Raton', client:'Johnson Family',
+    stage:'prelisting', price:'$485,000', commPct:3, closeDate:'',
+    notes:'Staging next Friday', checklist:{}, priority:false,
+    side:'seller', propType:'SFH',
+    contacts:{ coagent:'', lender:'Mike Torres', titleCo:'Coastal Title', inspector:'', appraiser:'' },
+    keyDates:{ close:'', inspection:'', option:'', appraisal:'', loan:'', walkthrough:'' },
+    contactLog:[]
+  },
+  {
+    id:2, address:'47 Ocean Blvd', city:'Deerfield Beach', client:'Martinez Estate',
+    stage:'inspection', price:'$620,000', commPct:2.5, closeDate:'2026-04-15',
+    notes:'Buyer requested AC inspection', checklist:{}, priority:true,
+    side:'buyer', propType:'Condo',
+    contacts:{ coagent:'Sarah Lee', lender:'First Choice Bank', titleCo:'', inspector:'Tom Brady Inspections', appraiser:'' },
+    keyDates:{ close:'2026-04-15', inspection:'2026-03-30', option:'2026-03-28', appraisal:'2026-04-05', loan:'2026-04-10', walkthrough:'' },
+    contactLog:[
+      { id:1, type:'call', text:'Spoke with lender re: appraisal timeline', ts: Date.now() - 86400000*2 },
+      { id:2, type:'email', text:'Sent inspection report to buyer', ts: Date.now() - 86400000 },
+    ]
+  },
+];
+
+function save() {
+  localStorage.setItem('masterLists_v3', JSON.stringify(masterLists));
+  localStorage.setItem('properties_v2',  JSON.stringify(properties));
+}
+
+// Return the checklist items for a given property (side-aware)
+function getItems(p) {
+  const side = p.side || 'seller';
+  return (masterLists[side] && masterLists[side][p.stage]) || [];
+}
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let currentPropId   = null;
+let currentTab      = 'checklist';
+let currentFilter   = 'all';
+let formPriority    = false;
+let formSide        = 'buyer';
+let editingStage    = null;
+let modalItems      = [];
+let editingItemIdx  = null;
+let selectedLogType = 'call';
+let selectedDocType = 'contract';
+
+function stg(id) { return STAGES.find(s => s.id === id); }
+function lt(id)  { return LOG_TYPES.find(t => t.id === id); }
+
+function pct(p) {
+  const items = getItems(p);
+  if (!items.length) return 0;
+  return Math.round(items.filter(i => p.checklist[i]).length / items.length * 100);
+}
+
+// ── date helpers ──
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function closingLabel(dateStr) {
+  const days = daysUntil(dateStr);
+  if (days === null) return null;
+  if (days < 0) return { text: `Closed ${Math.abs(days)}d ago`, cls: '' };
+  if (days === 0) return { text: '🔥 Closes TODAY', cls: 'urgent' };
+  if (days <= 7) return { text: `⚠️ ${days}d to close`, cls: 'urgent' };
+  if (days <= 14) return { text: `🟡 ${days}d to close`, cls: 'soon' };
+  return { text: `🗓 ${fmtDate(dateStr)}`, cls: '' };
+}
+
+function calcCommission(p) {
+  if (!p.price || !p.commPct) return null;
+  const raw = p.price.replace(/[^0-9.]/g,'');
+  if (!raw) return null;
+  const val = parseFloat(raw) * (parseFloat(p.commPct) / 100);
+  if (isNaN(val)) return null;
+  return val;
+}
+
+function fmtMoney(n) {
+  if (n === null || n === undefined) return '—';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+// ══════════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (name === 'list') { renderList(); renderSummary(); initApiKeyBar(); }
+  if (name === 'add')  { initAddForm(); }
+  if (name === 'checklists') { renderManager(); }
+}
+
+function checkSVG(color) {
+  return `<svg class="chk-svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M2.5 7L5.5 10L11.5 4" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ══════════════════════════════════════════════════
+// LIST + SUMMARY
+// ══════════════════════════════════════════════════
+function renderSummary() {
+  const active = properties.filter(p => p.stage !== 'closed');
+  const totalVal = active.reduce((acc,p) => {
+    const raw = (p.price||'').replace(/[^0-9.]/g,'');
+    return acc + (parseFloat(raw)||0);
+  }, 0);
+  const totalComm = active.reduce((acc,p) => {
+    const c = calcCommission(p);
+    return acc + (c||0);
+  }, 0);
+  const closingSoon = active.filter(p => {
+    const d = daysUntil(p.closeDate);
+    return d !== null && d >= 0 && d <= 30;
+  }).length;
+
+  document.getElementById('pipeline-summary').innerHTML = `
+    <div class="summary-chip">
+      <div class="summary-chip-label">Active Deals</div>
+      <div class="summary-chip-val">${active.length}</div>
+    </div>
+    <div class="summary-chip">
+      <div class="summary-chip-label">Pipeline Value</div>
+      <div class="summary-chip-val">${totalVal >= 1000000 ? '$' + (totalVal/1000000).toFixed(1)+'M' : fmtMoney(totalVal)}</div>
+    </div>
+    <div class="summary-chip">
+      <div class="summary-chip-label">Est. Commission</div>
+      <div class="summary-chip-val" style="color:#4cd474">${fmtMoney(totalComm)}</div>
+    </div>
+    <div class="summary-chip">
+      <div class="summary-chip-label">Closing Soon</div>
+      <div class="summary-chip-val" style="color:${closingSoon>0?'#e74c3c':'#fff'}">${closingSoon}</div>
+    </div>
+  `;
+}
+
+function renderList() {
+  // filter pills
+  const pills = [{ id:'all', label:'All' }, ...STAGES.map(s => ({ id:s.id, label:s.label }))];
+  document.getElementById('filter-bar').innerHTML = pills.map(p =>
+    `<button class="filter-pill ${currentFilter===p.id?'active':''}" style="${currentFilter===p.id?`border-color:${p.id==='all'?'#E07B3F':stg(p.id)?.color||'#E07B3F'};color:${p.id==='all'?'#E07B3F':stg(p.id)?.color||'#E07B3F'}`:''}" onclick="setFilter('${p.id}')">${p.label}</button>`
+  ).join('');
+
+  let filtered = properties;
+  if (currentFilter !== 'all') filtered = properties.filter(p => p.stage === currentFilter);
+
+  const countEl = document.getElementById('prop-count');
+  countEl.textContent = `${properties.length} active deal${properties.length!==1?'s':''}`;
+
+  if (!filtered.length) {
+    document.getElementById('prop-list').innerHTML = '<div class="empty-msg">No deals here yet.<br>Tap + to add your first deal.</div>';
+    return;
+  }
+
+  document.getElementById('prop-list').innerHTML = filtered.map(p => {
+    const s = stg(p.stage);
+    const pc = pct(p);
+    const closing = closingLabel(p.closeDate);
+    const comm = calcCommission(p);
+    const sideClass = p.side === 'buyer' ? 'side-buyer' : 'side-seller';
+    const sideLabel = p.side === 'buyer' ? '🛒 Buyer' : '🏷️ Seller';
+    return `<div class="prop-card" style="border-left-color:${s.color}" onclick="openDetail(${p.id})">
+      <div class="card-top-row">
+        <div style="flex:1">
+          <div class="card-badges">
+            <span class="side-badge ${sideClass}">${sideLabel}</span>
+            ${p.propType ? `<span class="prop-type-badge">${p.propType}</span>` : ''}
+          </div>
+          <div class="prop-name">${esc2(p.address)}</div>
+          <div class="prop-sub">${esc2(p.city||'')}${p.city&&p.client?' · ':''}${esc2(p.client)}</div>
+        </div>
+        ${p.priority ? '<div class="priority-dot" style="margin-left:10px"></div>' : ''}
+      </div>
+      <div class="prop-row">
+        <span class="stage-badge" style="background:${s.color}22;color:${s.color}">${s.icon} ${s.label}</span>
+        <span class="prop-price">${p.price||'—'}</span>
+      </div>
+      ${comm ? `<div class="commission-line">≈ ${fmtMoney(comm)} commission</div>` : ''}
+      ${closing ? `<div class="close-date ${closing.cls}">${closing.text}</div>` : ''}
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" style="width:${pc}%;background:${s.color}"></div></div>
+        <span class="prog-pct">${pc}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f) { currentFilter = f; renderList(); }
+
+// ══════════════════════════════════════════════════
+// DETAIL
+// ══════════════════════════════════════════════════
+function openDetail(id) {
+  currentPropId = id;
+  currentTab = 'checklist';
+  showScreen('detail');
+  renderDetail();
+}
+
+function renderDetail() {
+  const p = properties.find(x => x.id === currentPropId);
+  const s = stg(p.stage);
+  const pc = pct(p);
+  const items = getItems(p);
+  const done = items.filter(i => p.checklist[i]).length;
+  const sideClass = p.side === 'buyer' ? 'side-buyer' : 'side-seller';
+  const sideLabel = p.side === 'buyer' ? '🛒 Buyer' : '🏷️ Seller';
+
+  document.getElementById('detail-hdr').style.background = '#0f0f1e';
+  document.getElementById('det-address').textContent = p.address;
+  document.getElementById('det-city').innerHTML = `<span class="side-badge ${sideClass}" style="font-size:10px;padding:1px 7px;border-radius:5px;margin-right:4px">${sideLabel}</span>${p.city||''}${p.propType?' · '+p.propType:''}`;
+  document.getElementById('det-client-price').textContent = `${p.client} · ${p.price||'—'}${p.commPct?' · '+p.commPct+'% comm':''}`;
+  document.getElementById('det-priority-badge').innerHTML = p.priority ? '🔴' : '';
+  document.getElementById('det-stage-badge').textContent = `${s.icon} ${s.label}`;
+  document.getElementById('det-stage-badge').style.cssText = `background:${s.color}33;color:${s.color}`;
+  document.getElementById('det-done-count').textContent = `${done}/${items.length} done`;
+  document.getElementById('det-prog-fill').style.cssText = `width:${pc}%;background:${s.color}`;
+
+  // tab colors
+  document.querySelectorAll('.tab').forEach(t => {
+    t.style.color = '';
+    t.classList.remove('active');
+  });
+  const activeTab = document.getElementById('tab-' + currentTab);
+  if (activeTab) { activeTab.classList.add('active'); activeTab.style.color = s.color; }
+
+  renderDetailBody();
+}
+
+function switchTab(tab) { currentTab = tab; renderDetail(); }
+
+function renderDetailBody() {
+  const p = properties.find(x => x.id === currentPropId);
+  const s = stg(p.stage);
+  const body = document.getElementById('detail-body');
+  const items = getItems(p);
+
+  // ── CHECKLIST ──
+  if (currentTab === 'checklist') {
+    if (!items.length) {
+      body.innerHTML = '<div class="empty-msg">No checklist items for this stage yet.<br>Go to ✏️ Lists from the home screen to add some.</div>';
+      return;
+    }
+    body.innerHTML = items.map(item => {
+      const checked = !!p.checklist[item];
+      return `<div class="chk-item" onclick="toggleCheck('${esc(item)}')">
+        <div class="chk-box ${checked?'checked':''}" style="color:${s.color}">
+          ${checked ? checkSVG(s.color) : ''}
+        </div>
+        <span class="chk-label ${checked?'done':''}">${esc2(item)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── CONTACTS ──
+  if (currentTab === 'contacts') {
+    const c = p.contacts || {};
+    let html = `<div class="contacts-card">
+      <div class="notes-hdr">
+        <span class="notes-label">KEY CONTACTS</span>
+        <button class="notes-edit-btn" onclick="openContactModal()">Edit</button>
+      </div>`;
+    CONTACT_ROLES.forEach(r => {
+      const name = c[r.key] || '';
+      html += `<div class="contact-row">
+        <div>
+          <div class="contact-role">${r.label}</div>
+          <div class="contact-name ${name?'':'empty'}">${name || 'Not set'}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    body.innerHTML = html;
+  }
+
+  // ── CONTACT LOG ──
+  if (currentTab === 'log') {
+    const log = p.contactLog || [];
+    let html = `<div class="log-add-zone">
+      <div class="log-type-row">
+        ${LOG_TYPES.map(t => `<button class="log-type-btn ${selectedLogType===t.id?'sel':''}" style="${selectedLogType===t.id?'background:'+t.color:''}; ${selectedLogType===t.id?'color:#fff':''}" onclick="selectLogType('${t.id}')">${t.label}</button>`).join('')}
+      </div>
+      <div class="log-input-row">
+        <input class="log-text-input" id="log-input" placeholder="What happened?" onkeydown="if(event.key==='Enter')addLogEntry()">
+        <button class="log-submit-btn" onclick="addLogEntry()">+</button>
+      </div>
+    </div>`;
+
+    if (!log.length) {
+      html += '<div class="log-empty">No activity logged yet. Use the form above to track calls, emails, and visits.</div>';
+    } else {
+      html += [...log].reverse().map(entry => {
+        const t = lt(entry.type) || { color:'#888', label:'Note' };
+        const ts = new Date(entry.ts);
+        const timeStr = ts.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + ts.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        return `<div class="log-entry" style="border-left-color:${t.color}">
+          <div class="log-entry-top">
+            <span class="log-entry-type" style="color:${t.color}">${t.label}</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span class="log-entry-time">${timeStr}</span>
+              <button class="log-entry-delete" onclick="deleteLogEntry(${entry.id})">✕</button>
+            </div>
+          </div>
+          <div class="log-entry-text">${esc2(entry.text)}</div>
+        </div>`;
+      }).join('');
+    }
+    body.innerHTML = html;
+  }
+
+  // ── DOCS ──
+  if (currentTab === 'docs') {
+    const docs = p.docs || [];
+    const DOC_TYPES = [
+      { id:'contract',  label:'Contract',         icon:'📄' },
+      { id:'listing',   label:'Listing Agreement', icon:'📋' },
+      { id:'addendum',  label:'Addendum',          icon:'📝' },
+      { id:'inspection',label:'Inspection',        icon:'🔍' },
+      { id:'appraisal', label:'Appraisal',         icon:'📊' },
+      { id:'title',     label:'Title',             icon:'🏛️' },
+      { id:'other',     label:'Other',             icon:'📎' },
+    ];
+    const selType = selectedDocType || 'contract';
+    let html = `<div class="docs-add-zone">
+      <div class="docs-add-label">Add Document Link</div>
+      <div class="doc-type-row">
+        ${DOC_TYPES.map(t => `<button class="doc-type-btn ${selType===t.id?'sel':''}" onclick="selectDocType('${t.id}')">${t.label}</button>`).join('')}
+      </div>
+      <input class="doc-name-input" id="doc-name-input" placeholder="Document name (e.g. Purchase Agreement – 123 Maple)">
+      <div class="doc-link-row">
+        <input class="doc-link-input" id="doc-link-input" placeholder="Paste Google Drive or Dropbox link" onkeydown="if(event.key==='Enter')addDoc()">
+        <button class="doc-add-btn" onclick="addDoc()">+</button>
+      </div>
+    </div>`;
+    if (!docs.length) {
+      html += `<div class="doc-empty">No documents linked yet.<br>Paste a Google Drive or Dropbox link above.</div>`;
+    } else {
+      html += docs.map((d, idx) => {
+        const dt = DOC_TYPES.find(t => t.id === d.type) || DOC_TYPES[6];
+        return `<div class="doc-item">
+          <div class="doc-icon">${dt.icon}</div>
+          <div class="doc-info">
+            <div class="doc-name">${esc2(d.name)}</div>
+            <div class="doc-type-label">${dt.label}</div>
+          </div>
+          <a class="doc-open-btn" href="${esc2(d.url)}" target="_blank" rel="noopener">Open ↗</a>
+          <button class="doc-del-btn" onclick="deleteDoc(${idx})">✕</button>
+        </div>`;
+      }).join('');
+    }
+    body.innerHTML = html;
+  }
+
+  // ── NOTES ──
+  if (currentTab === 'notes') {
+    const kd = p.keyDates || {};
+    const dateFields = [
+      { key:'close',       label:'Target Close' },
+      { key:'inspection',  label:'Inspection Deadline' },
+      { key:'option',      label:'Option / DD End' },
+      { key:'appraisal',   label:'Appraisal Due' },
+      { key:'loan',        label:'Loan Commitment' },
+      { key:'walkthrough', label:'Walk-Through' },
+    ];
+
+    let html = `<div class="key-dates-card">
+      <div class="notes-hdr">
+        <span class="notes-label">KEY DATES</span>
+        <button class="notes-edit-btn" onclick="openDatesModal()">Edit</button>
+      </div>`;
+    dateFields.forEach(f => {
+      const val = kd[f.key] || p.closeDate && f.key==='close' ? (kd[f.key]||p.closeDate) : '';
+      if (f.key === 'close' && !val && p.closeDate) kd[f.key] = p.closeDate;
+      const dateVal = kd[f.key]||'';
+      let cls = 'empty', display = 'Not set';
+      if (dateVal) {
+        const days = daysUntil(dateVal);
+        display = fmtDate(dateVal);
+        if (days !== null) {
+          if (days < 0) display += ' (past)';
+          else if (days === 0) { display = '🔥 TODAY'; cls = 'urgent'; }
+          else if (days <= 7) { display += ` (${days}d)`; cls = 'urgent'; }
+          else if (days <= 14) { display += ` (${days}d)`; cls = 'soon'; }
+          else cls = '';
+        } else cls = '';
+      }
+      html += `<div class="key-date-row">
+        <span class="key-date-label">${f.label}</span>
+        <span class="key-date-val ${cls}">${display}</span>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Commission breakdown
+    const comm = calcCommission(p);
+    if (comm !== null) {
+      const raw = parseFloat((p.price||'').replace(/[^0-9.]/g,''))||0;
+      html += `<div class="comm-card">
+        <div class="comm-title">💰 Commission Breakdown</div>
+        <div class="comm-row"><span class="comm-label">Sale Price</span><span class="comm-val">${p.price}</span></div>
+        <div class="comm-row"><span class="comm-label">Commission Rate</span><span class="comm-val">${p.commPct}%</span></div>
+        <div class="comm-total-row"><span class="comm-total-label">Estimated Commission</span><span class="comm-total-val">${fmtMoney(comm)}</span></div>
+      </div>`;
+    }
+
+    // Notes
+    html += `<div class="notes-card">
+      <div class="notes-hdr">
+        <span class="notes-label">NOTES</span>
+        <button class="notes-edit-btn" onclick="startEditNotes()">Edit</button>
+      </div>
+      <div id="notes-display" class="${p.notes?'notes-text':'notes-empty'}">${p.notes ? esc2(p.notes) : 'No notes yet. Tap Edit to add.'}</div>
+      <div id="notes-edit-zone" style="display:none">
+        <textarea class="form-input" id="notes-ta" style="min-height:120px">${esc2(p.notes||'')}</textarea>
+        <div class="save-cancel">
+          <button class="btn-save-sm" onclick="saveNotes()">Save</button>
+          <button class="btn-cancel-sm" onclick="cancelNotes()">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+    body.innerHTML = html;
+  }
+
+  // ── STAGE ──
+  if (currentTab === 'stage') {
+    let html = '<div style="font-size:13px;color:#aaa;margin-bottom:12px;padding:0 4px">Tap to move this deal to a new stage</div>';
+    html += STAGES.map(st => {
+      const active = st.id === p.stage;
+      const cnt = ((masterLists[p.side||'seller']||{})[st.id]||[]).length;
+      return `<div class="stage-row" style="border-color:${active?st.color:'transparent'}" onclick="moveStage('${st.id}')">
+        <div class="stage-icon-wrap" style="background:${st.color}22">${st.icon}</div>
+        <div>
+          <div class="stage-name" style="color:${active?st.color:'#333'};font-weight:${active?700:500}">${st.label}</div>
+          <div class="stage-count">${cnt} tasks</div>
+        </div>
+        ${active ? `<div class="stage-check" style="color:${st.color}">✓</div>` : ''}
+      </div>`;
+    }).join('');
+    html += `<div class="delete-zone">
+      <button class="btn-priority" style="background:${p.priority?'#e74c3c11':'#fff'};border-color:${p.priority?'#e74c3c':'#eee'};color:${p.priority?'#e74c3c':'#888'};font-weight:${p.priority?700:400}" onclick="togglePriority()">
+        🔴 ${p.priority ? 'Remove High Priority' : 'Mark as High Priority'}
+      </button>
+      <button class="btn-secondary" style="color:#ccc" onclick="deleteProperty()">🗑 Delete Deal</button>
+    </div>`;
+    body.innerHTML = html;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// CHECKLIST
+// ══════════════════════════════════════════════════
+function toggleCheck(item) {
+  const p = properties.find(x => x.id === currentPropId);
+  p.checklist[item] = !p.checklist[item];
+  save();
+  renderDetail();
+}
+
+function moveStage(stageId) {
+  const p = properties.find(x => x.id === currentPropId);
+  if (p.stage === stageId) return;
+  p.stage = stageId;
+  p.checklist = {};
+  save();
+  renderDetail();
+}
+
+function togglePriority() {
+  const p = properties.find(x => x.id === currentPropId);
+  p.priority = !p.priority;
+  save();
+  renderDetail();
+}
+
+function deleteProperty() {
+  if (!confirm('Delete this deal?')) return;
+  properties = properties.filter(x => x.id !== currentPropId);
+  save();
+  showScreen('list');
+}
+
+// ── Notes ──
+function startEditNotes() {
+  document.getElementById('notes-display').style.display = 'none';
+  document.getElementById('notes-edit-zone').style.display = 'block';
+  document.getElementById('notes-ta').focus();
+}
+function saveNotes() {
+  const p = properties.find(x => x.id === currentPropId);
+  p.notes = document.getElementById('notes-ta').value;
+  save();
+  renderDetailBody();
+}
+function cancelNotes() { renderDetailBody(); }
+
+// ── Contact Log ──
+function selectLogType(type) { selectedLogType = type; renderDetailBody(); }
+
+function addLogEntry() {
+  const inp = document.getElementById('log-input');
+  const text = inp ? inp.value.trim() : '';
+  if (!text) return;
+  const p = properties.find(x => x.id === currentPropId);
+  if (!p.contactLog) p.contactLog = [];
+  p.contactLog.push({ id: Date.now(), type: selectedLogType, text, ts: Date.now() });
+  save();
+  renderDetailBody();
+}
+
+function deleteLogEntry(entryId) {
+  const p = properties.find(x => x.id === currentPropId);
+  p.contactLog = (p.contactLog||[]).filter(e => e.id !== entryId);
+  save();
+  renderDetailBody();
+}
+
+// ── Docs ──
+function selectDocType(type) {
+  selectedDocType = type;
+  renderDetailBody();
+}
+
+function addDoc() {
+  const nameEl = document.getElementById('doc-name-input');
+  const linkEl = document.getElementById('doc-link-input');
+  const url  = linkEl ? linkEl.value.trim() : '';
+  const name = nameEl ? nameEl.value.trim() : '';
+  if (!url) { alert('Please paste a document link.'); return; }
+  if (!url.startsWith('http')) { alert('Please enter a valid URL starting with http.'); return; }
+  const p = properties.find(x => x.id === currentPropId);
+  if (!p.docs) p.docs = [];
+  p.docs.push({ id: Date.now(), type: selectedDocType, name: name || selectedDocType, url });
+  save();
+  renderDetailBody();
+}
+
+function deleteDoc(idx) {
+  if (!confirm('Remove this document link?')) return;
+  const p = properties.find(x => x.id === currentPropId);
+  p.docs.splice(idx, 1);
+  save();
+  renderDetailBody();
+}
+
+// ── Contact Modal ──
+function openContactModal() {
+  const p = properties.find(x => x.id === currentPropId);
+  const c = p.contacts || {};
+  document.getElementById('cm-coagent').value   = c.coagent || '';
+  document.getElementById('cm-lender').value    = c.lender || '';
+  document.getElementById('cm-title-co').value  = c.titleCo || '';
+  document.getElementById('cm-inspector').value = c.inspector || '';
+  document.getElementById('cm-appraiser').value = c.appraiser || '';
+  document.getElementById('contact-modal').classList.add('open');
+}
+function closeContactModal() { document.getElementById('contact-modal').classList.remove('open'); }
+function saveContactModal() {
+  const p = properties.find(x => x.id === currentPropId);
+  p.contacts = {
+    coagent:   document.getElementById('cm-coagent').value.trim(),
+    lender:    document.getElementById('cm-lender').value.trim(),
+    titleCo:   document.getElementById('cm-title-co').value.trim(),
+    inspector: document.getElementById('cm-inspector').value.trim(),
+    appraiser: document.getElementById('cm-appraiser').value.trim(),
+  };
+  save();
+  closeContactModal();
+  renderDetailBody();
+}
+
+// ── Dates Modal ──
+function openDatesModal() {
+  const p = properties.find(x => x.id === currentPropId);
+  const kd = p.keyDates || {};
+  document.getElementById('dm-close').value       = kd.close || p.closeDate || '';
+  document.getElementById('dm-inspection').value  = kd.inspection || '';
+  document.getElementById('dm-option').value      = kd.option || '';
+  document.getElementById('dm-appraisal').value   = kd.appraisal || '';
+  document.getElementById('dm-loan').value        = kd.loan || '';
+  document.getElementById('dm-walkthrough').value = kd.walkthrough || '';
+  document.getElementById('dates-modal').classList.add('open');
+}
+function closeDatesModal() { document.getElementById('dates-modal').classList.remove('open'); }
+function saveDatesModal() {
+  const p = properties.find(x => x.id === currentPropId);
+  p.keyDates = {
+    close:       document.getElementById('dm-close').value,
+    inspection:  document.getElementById('dm-inspection').value,
+    option:      document.getElementById('dm-option').value,
+    appraisal:   document.getElementById('dm-appraisal').value,
+    loan:        document.getElementById('dm-loan').value,
+    walkthrough: document.getElementById('dm-walkthrough').value,
+  };
+  p.closeDate = p.keyDates.close;
+  save();
+  closeDatesModal();
+  renderDetailBody();
+}
+
+// ══════════════════════════════════════════════════
+// ADD PROPERTY
+// ══════════════════════════════════════════════════
+function initAddForm() {
+  formPriority = false;
+  formSide = 'buyer';
+  ['f-address','f-city','f-client','f-price','f-coagent','f-lender','f-title-co','f-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-comm').value = '';
+  document.getElementById('f-close').value = '';
+  document.getElementById('f-inspection-date').value = '';
+  document.getElementById('f-loan-date').value = '';
+  const sel = document.getElementById('f-stage');
+  sel.innerHTML = STAGES.map(s => `<option value="${s.id}">${s.icon} ${s.label}</option>`).join('');
+  setFormSide('buyer');
+  updateFormPriorityUI();
+}
+
+function setFormSide(side) {
+  formSide = side;
+  document.getElementById('seg-buyer').classList.toggle('active', side==='buyer');
+  document.getElementById('seg-seller').classList.toggle('active', side==='seller');
+}
+
+function toggleFormPriority() {
+  formPriority = !formPriority;
+  updateFormPriorityUI();
+}
+
+function updateFormPriorityUI() {
+  const box = document.getElementById('f-priority-box');
+  const lbl = document.getElementById('f-priority-label');
+  const tog = document.getElementById('f-priority-toggle');
+  tog.style.borderColor = formPriority ? '#e74c3c' : 'transparent';
+  lbl.style.color = formPriority ? '#e74c3c' : '#888';
+  box.style.background = formPriority ? '#e74c3c' : '#eee';
+  box.innerHTML = formPriority ? checkSVG('#e74c3c') : '';
+}
+
+function saveNewProperty() {
+  const address = document.getElementById('f-address').value.trim();
+  const client  = document.getElementById('f-client').value.trim();
+  if (!address || !client) { alert('Address and client name are required.'); return; }
+  const closeDate = document.getElementById('f-close').value;
+  const p = {
+    id: Date.now(),
+    address, city: document.getElementById('f-city').value.trim(),
+    client, price: document.getElementById('f-price').value.trim(),
+    commPct: parseFloat(document.getElementById('f-comm').value)||0,
+    stage: document.getElementById('f-stage').value,
+    closeDate,
+    notes: document.getElementById('f-notes').value.trim(),
+    priority: formPriority, checklist: {},
+    side: formSide,
+    propType: document.getElementById('f-proptype').value,
+    contacts: {
+      coagent:   document.getElementById('f-coagent').value.trim(),
+      lender:    document.getElementById('f-lender').value.trim(),
+      titleCo:   document.getElementById('f-title-co').value.trim(),
+      inspector: '', appraiser: ''
+    },
+    keyDates: {
+      close: closeDate,
+      inspection: document.getElementById('f-inspection-date').value,
+      option: '', appraisal: '',
+      loan: document.getElementById('f-loan-date').value,
+      walkthrough: ''
+    },
+    contactLog: [],
+  };
+  properties.push(p);
+  save();
+  showScreen('list');
+}
+
+// ══════════════════════════════════════════════════
+// CHECKLIST MANAGER
+// ══════════════════════════════════════════════════
+function renderManager() {
+  const sides = [
+    { id:'seller', label:'🏷️ Seller Checklists', color:'#d35400' },
+    { id:'buyer',  label:'🛒 Buyer Checklists',  color:'#2980b9' },
+  ];
+  document.getElementById('mgr-list').innerHTML = sides.map(side => `
+    <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.8px;font-weight:700;padding:8px 4px 6px">${side.label}</div>
+    ${STAGES.map(s => {
+      const cnt = ((masterLists[side.id]||{})[s.id]||[]).length;
+      return `<div class="stage-mgr-row" style="border-left-color:${s.color}" onclick="openEditor('${side.id}','${s.id}')">
+        <div class="stage-icon-wrap" style="background:${s.color}22;width:44px;height:44px;font-size:22px">${s.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600;color:#1a1a2e">${s.label}</div>
+          <div style="font-size:12px;color:#aaa;margin-top:2px">${cnt} items</div>
+        </div>
+        <div class="chevron">›</div>
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════
+// CHECKLIST EDITOR MODAL
+// ══════════════════════════════════════════════════
+let editingSide = 'seller';
+
+function openEditor(side, stageId) {
+  editingSide    = side;
+  editingStage   = stageId;
+  modalItems     = [...((masterLists[side]||{})[stageId]||[])];
+  editingItemIdx = null;
+  const s = stg(stageId);
+  const sideLabel = side === 'buyer' ? '🛒 Buyer' : '🏷️ Seller';
+  document.getElementById('modal-title').textContent = `${s.icon} ${s.label} Checklist`;
+  document.getElementById('modal-sub').textContent   = `${sideLabel} · ${modalItems.length} items`;
+  document.getElementById('editor-modal').classList.add('open');
+  document.getElementById('modal-save-btn').style.background = s.color;
+  renderModalBody();
+}
+
+function closeModal() {
+  document.getElementById('editor-modal').classList.remove('open');
+  editingItemIdx = null;
+}
+
+function renderModalBody() {
+  const s = stg(editingStage);
+  const sideLabel = editingSide === 'buyer' ? '🛒 Buyer' : '🏷️ Seller';
+  document.getElementById('modal-sub').textContent = `${sideLabel} · ${modalItems.length} items · tap ✏️ to edit`;
+  document.getElementById('modal-save-btn').textContent = `Save Checklist (${modalItems.length} items)`;
+
+  let html = modalItems.map((item, idx) => {
+    if (editingItemIdx === idx) {
+      return `<div class="ed-item">
+        <input class="ed-input" id="ed-input-${idx}" value="${esc2(item)}" style="border-color:${s.color}" onkeydown="edKeyDown(event,${idx})">
+        <div class="ed-edit-btns">
+          <button class="ed-save" style="background:${s.color}" onclick="saveEditItem(${idx})">Save</button>
+          <button class="ed-cancel" onclick="cancelEditItem()">Cancel</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="ed-item">
+      <div class="ed-item-row">
+        <div class="ed-arrows">
+          <button class="arr-btn" ${idx===0?'disabled':''} onclick="moveItem(${idx},-1)">▲</button>
+          <button class="arr-btn" ${idx===modalItems.length-1?'disabled':''} onclick="moveItem(${idx},1)">▼</button>
+        </div>
+        <span class="ed-text">${esc2(item)}</span>
+        <button class="ed-btn" onclick="startEditItem(${idx})">✏️</button>
+        <button class="ed-btn" onclick="deleteModalItem(${idx})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  html += `<div class="add-item-wrap" style="border-color:${s.color}55">
+    <div class="add-item-label" style="color:${s.color}">+ ADD ITEM</div>
+    <div class="add-item-row">
+      <input class="add-item-input" id="new-item-input" placeholder="Type new checklist item..." onkeydown="if(event.key==='Enter')addModalItem()">
+      <button class="add-item-btn" style="background:${s.color}" onclick="addModalItem()">+</button>
+    </div>
+  </div>
+  <button class="reset-btn" onclick="resetModalToDefault()">Reset to Defaults</button>`;
+
+  document.getElementById('modal-body').innerHTML = html;
+  if (editingItemIdx !== null) {
+    const inp = document.getElementById('ed-input-' + editingItemIdx);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+}
+
+function startEditItem(idx) { editingItemIdx = idx; renderModalBody(); }
+function cancelEditItem()   { editingItemIdx = null; renderModalBody(); }
+
+function saveEditItem(idx) {
+  const inp = document.getElementById('ed-input-' + idx);
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  modalItems[idx] = val;
+  editingItemIdx = null;
+  renderModalBody();
+}
+
+function edKeyDown(e, idx) {
+  if (e.key === 'Enter') saveEditItem(idx);
+  if (e.key === 'Escape') cancelEditItem();
+}
+
+function deleteModalItem(idx) {
+  modalItems.splice(idx, 1);
+  if (editingItemIdx === idx) editingItemIdx = null;
+  renderModalBody();
+}
+
+function moveItem(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= modalItems.length) return;
+  [modalItems[idx], modalItems[newIdx]] = [modalItems[newIdx], modalItems[idx]];
+  renderModalBody();
+}
+
+function addModalItem() {
+  const inp = document.getElementById('new-item-input');
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  modalItems.push(val);
+  inp.value = '';
+  renderModalBody();
+  const mb = document.getElementById('modal-body');
+  mb.scrollTop = mb.scrollHeight;
+}
+
+function resetModalToDefault() {
+  if (!confirm('Reset to default checklist? This cannot be undone.')) return;
+  modalItems = [...((DEFAULT_LISTS[editingSide]||{})[editingStage]||[])];
+  editingItemIdx = null;
+  renderModalBody();
+}
+
+function saveModal() {
+  if (!masterLists[editingSide]) masterLists[editingSide] = {};
+  masterLists[editingSide][editingStage] = [...modalItems];
+  save();
+  closeModal();
+  renderManager();
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function esc(str)  { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+function esc2(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══════════════════════════════════════════════════
+// API KEY MANAGEMENT
+// ══════════════════════════════════════════════════
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || '';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  if (!val) return;
+  localStorage.setItem('anthropic_api_key', val);
+  document.getElementById('apikey-input').value = '';
+  document.getElementById('apikey-status').textContent = '✓ Saved';
+  document.getElementById('apikey-status').style.color = '#4cd474';
+  setTimeout(() => { document.getElementById('apikey-status').textContent = ''; }, 3000);
+}
+
+function initApiKeyBar() {
+  const key = getApiKey();
+  const status = document.getElementById('apikey-status');
+  if (key) {
+    status.textContent = '✓ Key saved';
+    status.style.color = '#4cd474';
+  } else {
+    status.textContent = 'No key';
+    status.style.color = '#888';
+  }
+}
+
+
+(function setupMLSDrop() {
+// ══════════════════════════════════════════════════
+// MLS PASTE IMPORT
+// ══════════════════════════════════════════════════
+function setMLSStatus(type, msg) {
+  const bar     = document.getElementById('mls-status');
+  const spinner = document.getElementById('mls-spinner');
+  bar.className = 'mls-status visible ' + type;
+  document.getElementById('mls-status-text').textContent = msg;
+  spinner.style.display = type === 'loading' ? 'block' : 'none';
+  if (type !== 'loading') setTimeout(() => bar.classList.remove('visible'), 5000);
+}
+
+async function handleMLSPaste() {
+  const text = (document.getElementById('mls-paste-input').value || '').trim();
+  if (!text) {
+    setMLSStatus('error', 'Nothing pasted yet. Open the MLS PDF, press Ctrl+A then Ctrl+C, then paste here.');
+    return;
+  }
+
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    setMLSStatus('error', 'No API key saved. Paste your Anthropic key in the field at the bottom of the home screen.');
+    return;
+  }
+
+  setMLSStatus('loading', 'Extracting listing details…');
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are a real estate data extractor. Extract property information from this MLS listing text and return ONLY a valid JSON object — no markdown, no explanation, no backticks.
+
+Return exactly this structure:
+{
+  "address": "street address only (no city/state)",
+  "city": "city name only",
+  "price": "$000,000 formatted",
+  "propType": "one of: SFH, Condo, Multi, Land, Commercial",
+  "beds": "number",
+  "baths": "number",
+  "sqft": "living area square footage, number only",
+  "listingAgent": "listing agent name",
+  "brokerName": "brokerage name",
+  "closeDate": "expected closing date in YYYY-MM-DD format if present, else empty string",
+  "notes": "1-2 sentence summary of key highlights"
+}
+
+If a field is not found use an empty string. Return only the JSON.
+
+MLS TEXT:
+${text}`
+        }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+
+    const raw   = (data.content || []).map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const ex    = JSON.parse(clean);
+
+    let filled = 0;
+    const set = (id, val) => {
+      if (!val) return;
+      const el = document.getElementById(id);
+      if (el) { el.value = val; filled++; }
+    };
+
+    set('f-address', ex.address);
+    set('f-city',    ex.city);
+    set('f-price',   ex.price);
+    set('f-close',   ex.closeDate);
+
+    const typeMap = { sfh:'SFH','single family':'SFH', condo:'Condo', townhouse:'Condo','multi-family':'Multi', multi:'Multi', land:'Land', lot:'Land', commercial:'Commercial' };
+    if (ex.propType) {
+      const mapped = typeMap[(ex.propType||'').toLowerCase()] || ex.propType;
+      const sel = document.getElementById('f-proptype');
+      if (sel) { const opt = [...sel.options].find(o => o.value === mapped); if (opt) { sel.value = mapped; filled++; } }
+    }
+
+    const agentStr = [ex.listingAgent, ex.brokerName].filter(Boolean).join(' · ');
+    if (agentStr) { const el = document.getElementById('f-coagent'); if (el) { el.value = agentStr; filled++; } }
+
+    const specs = [ex.beds?ex.beds+' bed':'', ex.baths?ex.baths+' bath':'', ex.sqft?ex.sqft+' sq ft':''].filter(Boolean).join(' · ');
+    const notesVal = [ex.notes, specs].filter(Boolean).join('\n');
+    if (notesVal) { const el = document.getElementById('f-notes'); if (el) { el.value = notesVal; filled++; } }
+
+    ['f-address','f-city','f-price','f-notes','f-coagent','f-close'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.value) { el.style.borderColor = '#27ae60'; setTimeout(() => { el.style.borderColor = ''; }, 2500); }
+    });
+
+    document.getElementById('mls-paste-input').value = '';
+    setMLSStatus('success', `✓ ${filled} fields filled — review and complete the form below`);
+
+  } catch(err) {
+    console.error('MLS import error:', err);
+    setMLSStatus('error', 'Could not extract listing. Check your API key and try again.');
+  }
+}
+
+
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+renderList();
+renderSummary();
+initApiKeyBar();
+</script>
+</body>
+</html>
