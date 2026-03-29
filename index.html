@@ -264,6 +264,12 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .mls-filled-badge { display: inline-flex; align-items: center; gap: 4px; background: #f0fff5; border: 1px solid #a0ddb8; color: #1a8a4a; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; margin-left: 8px; }
 
+  /* ── API KEY SETTINGS ── */
+  .apikey-bar { background: #1a1a2e; border-top: 1px solid #2a2a44; padding: 14px 16px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+  .apikey-input { flex: 1; background: #0f0f1e; border: 1px solid #2a2a44; border-radius: 8px; color: #ccc; font-size: 13px; padding: 9px 12px; font-family: 'DM Mono', monospace; }
+  .apikey-input:focus { outline: none; border-color: #E07B3F; }
+  .apikey-save-btn { background: #E07B3F; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 14px; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+  .apikey-status { font-size: 11px; font-family: 'DM Mono', monospace; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -287,6 +293,11 @@
   <div class="pipeline-summary" id="pipeline-summary"></div>
   <div class="filter-bar" id="filter-bar"></div>
   <div class="scroll-body" id="prop-list"></div>
+  <div class="apikey-bar">
+    <input class="apikey-input" id="apikey-input" type="password" placeholder="Paste Anthropic API key for MLS import…">
+    <button class="apikey-save-btn" onclick="saveApiKey()">Save</button>
+    <span class="apikey-status" id="apikey-status"></span>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════════════════
@@ -651,7 +662,7 @@ function fmtMoney(n) {
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
-  if (name === 'list') { renderList(); renderSummary(); }
+  if (name === 'list') { renderList(); renderSummary(); initApiKeyBar(); }
   if (name === 'add')  { initAddForm(); }
   if (name === 'checklists') { renderManager(); }
 }
@@ -1396,8 +1407,35 @@ function esc(str)  { return str.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 function esc2(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ══════════════════════════════════════════════════
-// MLS PDF IMPORT
+// API KEY MANAGEMENT
 // ══════════════════════════════════════════════════
+function getApiKey() {
+  return localStorage.getItem('anthropic_api_key') || '';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  if (!val) return;
+  localStorage.setItem('anthropic_api_key', val);
+  document.getElementById('apikey-input').value = '';
+  document.getElementById('apikey-status').textContent = '✓ Saved';
+  document.getElementById('apikey-status').style.color = '#4cd474';
+  setTimeout(() => { document.getElementById('apikey-status').textContent = ''; }, 3000);
+}
+
+function initApiKeyBar() {
+  const key = getApiKey();
+  const status = document.getElementById('apikey-status');
+  if (key) {
+    status.textContent = '✓ Key saved';
+    status.style.color = '#4cd474';
+  } else {
+    status.textContent = 'No key';
+    status.style.color = '#888';
+  }
+}
+
+
 (function setupMLSDrop() {
   const zone = document.getElementById('mls-drop-zone');
   if (!zone) return;
@@ -1439,10 +1477,20 @@ async function handleMLSUpload(file) {
 
   setMLSStatus('loading', 'Sending to Claude — extracting listing details…');
 
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    setMLSStatus('error', 'No API key saved. Paste your Anthropic key in the field at the bottom of the home screen.');
+    return;
+  }
+
   try {
-    const response = await fetch('http://localhost:3131/v1/messages', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -1555,6 +1603,7 @@ If a field is not found, use an empty string. Return only the JSON object, nothi
 // ══════════════════════════════════════════════════
 renderList();
 renderSummary();
+initApiKeyBar();
 </script>
 </body>
 </html>
